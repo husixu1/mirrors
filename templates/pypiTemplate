@@ -1,0 +1,55 @@
+#!/bin/sh
+
+echo '[DEFAULT]
+      mirror_file_path = %(syncPath)%
+      base_url =  %(url)%
+      log_filename = /var/log/%(logFileName)%
+      lock_file_name = /tmp/pypi-mirror.lock
+      fetch_since_days = 1
+      filename_matches =
+          *.zip
+          *.tgz
+          *.egg
+          *.tar.gz
+          *.tar.bz2
+      package_matches =
+          *
+      cleanup = False
+      create_indexes = True
+      verbose = True
+' > %(configFileName)%
+
+filename=`basename $0`
+
+# create the lock
+if [ -f _syncLock ] then
+	linecount=`wc -l _syncLock | grep -E '[[:digit:]]+' -o`
+	if [ linecount -eq %(maxThreadNum)% ] then
+		echo 'sync blocked ...'
+		return -1
+	fi
+else
+	echo $filename >> _syncLock
+fi
+
+# sync
+echo '==== sync '$filename' start ===='
+timeout %(timeout)% %(syncTool)% %(parameter)% %(configFileName)%
+echo '==== sync '$filename' stop ===='
+
+#check if sync succeeded
+
+
+# remove the lock
+if [ ! -f __syncLock ] then
+	touch __syncLock
+fi
+
+for line in `cat _syncLock`
+do
+	if [ $line != $filename ] then
+		echo line >> __syncLock
+	fi
+done
+
+mv __syncLock _syncLock
