@@ -2,4 +2,4 @@ __pycache__
 .idea
 Scripts/
 *.conf
-
+cmake-build-debug/

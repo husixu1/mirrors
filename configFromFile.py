@@ -14,7 +14,7 @@ class configurator:
 	mirrorConfigKeyDefault = {
 		"COMMON":{"synctool":"","url":"","synctime":"00:00","syncpath":"","priority":"1"},
 		"rsync":{"parameter":""},
-		"pypimirror":{"parameter":"-v -U -c", "configfilename":"", "logfilename":"pypimirror_log"} }
+		"pypimirror":{"parameter":"-v -U -c", "configfilename":"pypimirror_config.conf", "logfilename":"pypimirror_log.log"} }
 
 	ScriptDirectory = "Scripts"
 
@@ -67,7 +67,7 @@ class configurator:
 				if syncKeys[key]==1 and not key in parser[section]:
 					self.perror("in section "+section+" : key "+key+" must exist", 1)
 					isKeyExist = False
-			return isKeyExist
+		return isKeyExist
 
 	def generateSyncCommands(self, syncConfigFileName, mirrorConfigFileName):
 		"""generate sync command from two config file
@@ -106,10 +106,13 @@ class configurator:
 						buff = replacer.sub(mirrorParser[section][key],buff,1)
 					elif key in configurator.syncConfigKeys:
 						buff = replacer.sub(configurator.syncConfigKeyDefault[key],buff,1)
+					elif key in configurator.mirrorConfigKeyDefault["COMMON"]:
+						buff = replacer.sub(configurator.mirrorConfigKeyDefault["COMMON"][key],buff,1)
 					elif key in configurator.mirrorConfigKeyDefault[synctool]:
-						buff = replacer.sub(configurator.mirrorConfigKeyDefault[synctool][key],1)
+						buff = replacer.sub(configurator.mirrorConfigKeyDefault[synctool][key],buff,1)
 					else:
 						self.perror('Template: key "'+key+'" not found')
+						return False
 			except FileNotFoundError:
 				self.perror("file \""+synctool+"Template\" not found")
 				return False

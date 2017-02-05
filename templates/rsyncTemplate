@@ -2,9 +2,11 @@
 filename=`basename $0`
 
 # create the lock
-if [ -f _syncLock ] then 
+if [ -f _syncLock ] 
+then 
 	linecount=`wc -l _syncLock | grep -E '[[:digit:]]+' -o`
-	if [ linecount -eq %(maxThreadNum)% ] then
+	if [ linecount -eq %(maxThreadNum)% ]
+	then
 		echo 'sync blocked ...'
 		return -1
 	fi
@@ -21,13 +23,15 @@ echo '==== sync '$filename' stop ===='
 
 
 # remove the lock
-if [ ! -f __syncLock ] then
+if [ ! -f __syncLock ]
+then
 	touch __syncLock
 fi
 
 for line in `cat _syncLock`
 do
-	if [ $line != $filename ] then
+	if [ $line != $filename ]
+	then
 		echo line >> __syncLock
 	fi
 done
