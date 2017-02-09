@@ -177,7 +177,8 @@ class configurator:
 			self.verbose("directory "+configurator.ScriptDirectory+" does not exist, creating one...", 2)
 			call(["mkdir",configurator.ScriptDirectory])
 		else:
-			call(["rm","-rf",configurator.ScriptDirectory+"/*"])
+			call(["rm","-rf",configurator.ScriptDirectory])
+			call(["mkdir",configurator.ScriptDirectory])
 		# write buffs into file
 		for (section,command) in syncCommands:
 			outFile = open(configurator.ScriptDirectory+'/'+section+'.sh',"w")

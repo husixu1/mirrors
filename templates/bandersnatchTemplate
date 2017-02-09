@@ -25,9 +25,18 @@ then
 	if [ $linecount -eq %(maxThreadNum)% ]
 	then
 		echo 'sync blocked ...'
-		echo $filename"\tskipped\t"$(date +%F_%T) >>  %(syncLog)%
+		echo -e $filename"\tskipped\t"$(date +%F_%T) >>  %(syncLog)%
 		exit -1
-	fi
+	fi		
+	for line in `cat _syncLock`
+	do
+		if [ $line == $filename ]
+		then
+			echo 'sync blocked ...'
+			echo -e $filename"\tskipped\t"$(date +%F_%T) >> %(syncLog)%
+			exit -1
+		fi
+	done
 fi
 echo $filename >> _syncLock
 
@@ -38,10 +47,10 @@ timeout %(timeout)% %(syncTool)% %(parameter)% %(configFileName)% mirror
 if [ $? -eq 124 ]
 then
 	#sync timeout
-	echo $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
+	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
 else
 	#sync succeeded
-	echo $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
+	echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
 fi
 
 echo '==== sync '$filename' stop ===='
@@ -56,7 +65,7 @@ for line in `cat _syncLock`
 do
 	if [ $line != $filename ]
 	then
-		echo line >> __syncLock
+		echo $line >> __syncLock
 	fi
 done
 
