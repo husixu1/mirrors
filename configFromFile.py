@@ -1,22 +1,66 @@
 import configparser
 import re
 from subprocess import call
+import sys
 
 class configurator:
 	# the legal global config Keys
-	syncConfigKeys = { "maxthreadnum":0, "lockpolicy":0,"timeout":0,"defaultrsyncparameter":0}
-	syncConfigKeyDefault = {"maxthreadnum":"2", "lockpolicy":"wait", "timeout":"1d","defaultrsyncparameter":""}
+	syncConfigKeys = {
+		"maxthreadnum":0,
+		"lockpolicy":0,
+		"timeout":0,
+		"synclog":0,
+	}
+	syncConfigKeyDefault = {
+		"maxthreadnum":"2",
+		"lockpolicy":"wait",
+		"timeout":"1d",
+		"synclog":"syncLog.log"
+	}
 	# the legal config keys, 1 means that the key must exist
 	mirrorConfigKeys = {
-		"COMMON":{"synctool":1,"url":1,"synctime":0,"syncpath":1,"priority":0},
-		"rsync":{"parameter":0},
-		"pypimirror":{"parameter":0, "configfilename":0, "logfilename":0} }
+		"COMMON":{
+                        "synctool":1,
+                        "url":1,
+                        "synctime":0,
+						"syncinterval":0,
+                        "syncpath":1,
+                        "priority":0
+		},
+		"rsync":{
+                        "parameter":0
+		},
+		"bandersnatch":{
+                        "parameter":0,
+                        "configfilename":0,
+                        "logfilename":0
+		},
+		"git":{
+			"parameter":0
+		}
+	}
 	mirrorConfigKeyDefault = {
-		"COMMON":{"synctool":"","url":"","synctime":"00:00","syncpath":"","priority":"1"},
-		"rsync":{"parameter":""},
-		"pypimirror":{"parameter":"-v -U -c", "configfilename":"pypimirror_config.conf", "logfilename":"pypimirror_log.log"} }
+		"COMMON":{
+                        "synctool":"",
+                        "url":"",
+                        "synctime":"0",
+						"syncinterval":1,
+                        "syncpath":"",
+                        "priority":"1"},
+		"rsync":{
+                        "parameter":"--verbose --recursive --update --links --hard-links --safe-links --perms --times --delete-after --progress --human-readable "},
+		"bandersnatch":{
+                        "parameter":"-c",
+                        "configfilename":"bandersnatch_config.conf",
+                        "logfilename":"bandersnatch_log.log"
+		},
+		"git":{
+			"parameter":"remote -v update"
+		}
+	}
 
 	ScriptDirectory = "Scripts"
+	cronFileName = "cron"
 
 	def __init__(self, debugLevel_ = 0):
 		self.debugLevel = debugLevel_
@@ -60,7 +104,7 @@ class configurator:
 			# check the unidentified keys
 			for key in parser[section]:
 				if not key in syncKeys:
-					self.verbose("warning: key "+key+" unidentified", 1)
+					self.verbose("warning: in section "+section+": key "+key+" unidentified", 1)
 			# check the must-exist keys
 			isKeyExist = True
 			for key in syncKeys:
@@ -74,14 +118,16 @@ class configurator:
 		:return False if error occurred
 		:return a list of (section, command) if no error occurred
 		"""
+		if not self.checkMirrorConfigAccuracy(mirrorConfigFileName):
+			return  False
+		if not self.checkSyncConfigAccuracy(syncConfigFileName):
+			return False
+
 		syncParser = configparser.ConfigParser()
+		syncParser.read(syncConfigFileName)
 		mirrorParser = configparser.ConfigParser()
-		if syncParser.read(syncConfigFileName)==[]:
-			self.perror("config File "+syncConfigFileName+" not found, exiting...", 1)
-			return False
-		if mirrorParser.read(mirrorConfigFileName)==[]:
-			self.perror("config File "+mirrorConfigFileName+" not found, exiting...", 1)
-			return False
+		mirrorParser.read(mirrorConfigFileName)
+
 		buffs = []
 		for section in mirrorParser.sections():
 			buff = ''
@@ -119,11 +165,19 @@ class configurator:
 			buffs.append((section, buff))
 		return buffs
 
-	def generateExcutables(self, syncCommands):
+	def generateExcutables(self, syncConfigFileName, mirrorConfigFileName):
+		"""generate excutables from two file
+		note : this will remove the old excutales
+		"""
+		syncCommands = self.generateSyncCommands(syncConfigFileName, mirrorConfigFileName)
+		if not syncCommands:
+			return False
 		# make the script directory
 		if call(["test","-d",configurator.ScriptDirectory]) == 1:
 			self.verbose("directory "+configurator.ScriptDirectory+" does not exist, creating one...", 2)
 			call(["mkdir",configurator.ScriptDirectory])
+		else:
+			call(["rm","-rf",configurator.ScriptDirectory+"/*"])
 		# write buffs into file
 		for (section,command) in syncCommands:
 			outFile = open(configurator.ScriptDirectory+'/'+section+'.sh',"w")
@@ -135,8 +189,29 @@ class configurator:
 			self.verbose(command,2)
 		return True
 
-	def writeCrontab(self, sections):
-		pass
+	def writeCrontab(self, configFilename):
+		if not self.checkMirrorConfigAccuracy(configFilename):
+			return False
+		parser = configparser.ConfigParser()
+		parser.read(configFilename)
+
+		rootDir = sys.path[0]
+		cronFile = open(configurator.cronFileName,"w")
+		# write the cron tab according to sync time and sync interval
+		for section in parser.sections():
+			if "synctime" in parser[section]:
+				syncTime = parser[section]["synctime"]
+			else:
+				syncTime = self.mirrorConfigKeyDefault["COMMON"]["synctime"]
+			if "syncinterval" in parser[section]:
+				syncInterval = parser[section]["syncinterval"]
+			else:
+				syncInterval = self.mirrorConfigKeyDefault["COMMON"]["syncinterval"]
+			cronFile.write('* %s */%s * * /bin/sh %s/%s/%s.sh\n'%(syncTime, syncInterval, rootDir,configurator.ScriptDirectory,section))
+		cronFile.close()
+		# write into crontab
+		self.verbose("writing crontab... ", 0)
+		call(['sudo','crontab','-u','root',configurator.cronFileName])
 
 	def perror(self, error, level=1):
 		if self.debugLevel >= level:

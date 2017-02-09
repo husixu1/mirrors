@@ -14,9 +14,29 @@ then
 fi
 echo $filename >> _syncLock
 
+excuted=false
+if [ -f _executeOnceLock ]
+then
+	for name in `cat _excuteOnceLock`
+	do
+		if [ $name == $filename ]
+		then
+			excuted=true	
+		fi
+	done
+fi
+
+if [ ! $excuted ]
+then
+	# excute once commands here <----------------------------------------------
+	echo $filename > _excuteOnceLock
+fi
+
+# before sync comands here <--------------------------------------------------------
+
 # sync
 echo '==== sync '$filename' start ===='
-timeout %(timeout)% %(syncTool)% %(parameter)% %(url)% %(syncPath)%
+timeout %(timeout)% %(synctool)% # enter the sync command here <--------------------
 
 if [ $? -eq 124 ]
 then
@@ -27,6 +47,7 @@ else
 	echo $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
 fi
 
+# after sync commands here <-------------------------------------------------------
 echo '==== sync '$filename' stop ===='
 
 # remove the lock

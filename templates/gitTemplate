@@ -1,0 +1,65 @@
+#!/bin/sh
+filename=`basename $0`
+
+# create the lock
+if [ -f _syncLock ] 
+then 
+	linecount=`wc -l _syncLock | grep -E '[[:digit:]]+' -o`
+	if [ $linecount -eq %(maxThreadNum)% ]
+	then
+		echo 'sync blocked ...'
+		echo $filename"\tskipped\t"$(date +%F_%T) >>  %(syncLog)%
+		exit -1
+	fi
+fi
+echo $filename >> _syncLock
+
+excuted=false
+if [ -f _executeOnceLock ]
+then
+	for name in `cat _excuteOnceLock`
+	do
+		if [ $name == $filename ]
+		then
+			excuted=true	
+		fi
+	done
+fi
+
+if [ ! $excuted ]
+then
+	git clone --mirror %(url)% %(syncpath)%
+	echo $filename > _excuteOnceLock
+fi
+
+
+# sync
+echo '==== sync '$filename' start ===='
+timeout %(timeout)% %(synctool)% %(parameter)%
+
+if [ $? -eq 124 ]
+then
+	#sync timeout
+	echo $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
+else
+	#sync succeeded
+	echo $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
+fi
+
+echo '==== sync '$filename' stop ===='
+
+# remove the lock
+if [ ! -f __syncLock ]
+then
+	touch __syncLock
+fi
+
+for line in `cat _syncLock`
+do
+	if [ $line != $filename ]
+	then
+		echo line >> __syncLock
+	fi
+done
+
+mv __syncLock _syncLock

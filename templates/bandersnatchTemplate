@@ -1,4 +1,21 @@
 #!/bin/sh
+
+echo '
+[mirror]
+directory = %(syncPath)%
+master = %(url)%
+timeout = 30
+workers = 2
+; Note that package index directory hashing is incompatible with pip
+hash-index = false
+stop-on-error = false
+delete-packages = true
+;log-config = %(logFileName)%
+
+[statistics]
+access-log-pattern = /var/log/nginx/*.pypi.python.org*access*
+' > %(configFileName)%
+
 filename=`basename $0`
 
 # create the lock
@@ -16,7 +33,7 @@ echo $filename >> _syncLock
 
 # sync
 echo '==== sync '$filename' start ===='
-timeout %(timeout)% %(syncTool)% %(parameter)% %(url)% %(syncPath)%
+timeout %(timeout)% %(syncTool)% %(parameter)% %(configFileName)% mirror
 
 if [ $? -eq 124 ]
 then

@@ -1,0 +1,3 @@
+* 0 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/archlinux.sh
+* 0 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/pypi.sh
+* 0 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/linux.sh
