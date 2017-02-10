@@ -1,21 +1,4 @@
 #!/bin/sh
-
-echo '
-[mirror]
-directory = %(syncPath)%
-master = %(url)%
-timeout = 30
-workers = 2
-; Note that package index directory hashing is incompatible with pip
-hash-index = false
-stop-on-error = false
-delete-packages = true
-;log-config = %(logFileName)%
-
-[statistics]
-access-log-pattern = /var/log/nginx/*.pypi.python.org*access*
-' > %(configFileName)%
-
 filename=`basename $0`
 
 # create the lock
@@ -27,7 +10,7 @@ then
 		echo 'sync blocked ...'
 		echo -e $filename"\tskipped\t"$(date +%F_%T) >>  %(syncLog)%
 		exit -1
-	fi		
+	fi
 	for line in `cat _syncLock`
 	do
 		if [ $line == $filename ]
@@ -40,33 +23,30 @@ then
 fi
 echo $filename >> _syncLock
 
+if [ ! -d %(syncPath)% ]
+then
+	mkdir -p %(syncPath)%
+fi
+
 # sync
 echo '==== sync '$filename' start ===='
-timeout %(timeout)% %(syncTool)% %(parameter)% %(configFileName)% mirror
 
-if [ $? -eq 124 ]
+currentPath=$PWD
+cd %(syncPath)%
+timeout %(timeout)% %(synctool)% "%(url)%" -e "mirror --verbose -P %(threads)% --delete; bye"
+result=$?
+cd $currentPath
+
+if [ $result -eq 124 ]
 then
 	#sync timeout
 	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
 else
-	todoFile=%(syncPath)%/todo
-	if [ -f $todoFile ]
-	then
-		lineCount=`wc -l $todoFile | grep -E '[[:digit:]]+' -o`
-		if [ $lineCount -ne 0 ]
-		then
-			#sync fail
-			echo -e $filename"\tfailed\t"$(date +%F_%T) >> %(syncLog)%
-		else
-			#sync succeeded
-			echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
-		fi
-	else
-		#sync succeeded
-		echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
-	fi
+	#sync succeeded
+	echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
 fi
 
+# after sync commands here <-------------------------------------------------------
 echo '==== sync '$filename' stop ===='
 
 # remove the lock

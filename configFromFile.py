@@ -20,43 +20,52 @@ class configurator:
 	# the legal config keys, 1 means that the key must exist
 	mirrorConfigKeys = {
 		"COMMON":{
-                        "synctool":1,
-                        "url":1,
-                        "synctime":0,
-						"syncinterval":0,
-                        "syncpath":1,
-                        "priority":0
+            "synctool":1,
+            "url":1,
+            "synctime":0,
+            "syncinterval":0,
+            "syncpath":1,
+            "priority":0,
+            "timeout":0
 		},
 		"rsync":{
-                        "parameter":0
+            "parameter":0
 		},
 		"bandersnatch":{
-                        "parameter":0,
-                        "configfilename":0,
-                        "logfilename":0
+            "parameter":0,
+            "configfilename":0,
+            "logfilename":0
 		},
 		"git":{
 			"parameter":0
-		}
+		},
+        "lftp":{
+            "threads":0
+        }
 	}
 	mirrorConfigKeyDefault = {
 		"COMMON":{
-                        "synctool":"",
-                        "url":"",
-                        "synctime":"0",
-						"syncinterval":1,
-                        "syncpath":"",
-                        "priority":"1"},
+            "synctool":"",
+            "url":"",
+            "synctime":"0",
+            "syncinterval":1,
+            "syncpath":"",
+            "priority":"1",
+            "timeout":"1"
+        },
 		"rsync":{
-                        "parameter":"--verbose --recursive --update --links --hard-links --safe-links --perms --times --delete-after --progress --human-readable "},
+            "parameter":"--verbose --recursive --update --links --hard-links --safe-links --perms --times --delete-after --progress --human-readable "},
 		"bandersnatch":{
-                        "parameter":"-c",
-                        "configfilename":"bandersnatch_config.conf",
-                        "logfilename":"bandersnatch_log.log"
+            "parameter":"-c",
+            "configfilename":"bandersnatch_config.conf",
+            "logfilename":"bandersnatch_log.log"
 		},
 		"git":{
 			"parameter":"remote -v update"
-		}
+		},
+        "lftp":{
+            "threads":"5"
+        }
 	}
 
 	ScriptDirectory = "Scripts"
@@ -146,16 +155,21 @@ class configurator:
 						self.perror('Template: illegal key "'+key+'"')
 						return False
 					# replace macro with value
-					if key in syncParser["GLOBAL"]:
-						buff = replacer.sub(syncParser["GLOBAL"][key],buff,1)
-					elif key in mirrorParser[section]:
+					if key in mirrorParser[section]:
 						buff = replacer.sub(mirrorParser[section][key],buff,1)
-					elif key in configurator.syncConfigKeys:
-						buff = replacer.sub(configurator.syncConfigKeyDefault[key],buff,1)
+
+					elif key in syncParser["GLOBAL"]:
+						buff = replacer.sub(syncParser["GLOBAL"][key],buff,1)
+
 					elif key in configurator.mirrorConfigKeyDefault["COMMON"]:
 						buff = replacer.sub(configurator.mirrorConfigKeyDefault["COMMON"][key],buff,1)
+
 					elif key in configurator.mirrorConfigKeyDefault[synctool]:
 						buff = replacer.sub(configurator.mirrorConfigKeyDefault[synctool][key],buff,1)
+
+					elif key in configurator.syncConfigKeyDefault:
+						buff = replacer.sub(configurator.syncConfigKeyDefault[key],buff,1)
+
 					else:
 						self.perror('Template: key "'+key+'" not found')
 						return False

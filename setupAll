@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 from configFromFile import configurator
-conf = configurator(2)
+conf = configurator(1)
 
 # python preconfig
 
 conf.generateExcutables('sync.conf','mirror.conf')
-conf.writeCrontab('mirror.conf')
+#conf.writeCrontab('mirror.conf')

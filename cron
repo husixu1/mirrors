@@ -1,3 +1,4 @@
 * 0 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/archlinux.sh
-* 0 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/pypi.sh
-* 0 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/linux.sh
+* 2 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/pypi.sh
+* 3 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/linux.sh
+* 4 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/msys2.sh
