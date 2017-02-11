@@ -3,3 +3,4 @@ __pycache__
 Scripts/
 *.conf
 cmake-build-debug/
+log/

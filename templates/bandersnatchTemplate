@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo '
 [mirror]
@@ -41,8 +41,9 @@ fi
 echo $filename >> _syncLock
 
 # sync
+set -o pipefail
 echo '==== sync '$filename' start ===='
-timeout %(timeout)% %(syncTool)% %(parameter)% %(configFileName)% mirror
+timeout %(timeout)%h %(syncTool)% %(parameter)% %(configFileName)% mirror | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
 
 if [ $? -eq 124 ]
 then

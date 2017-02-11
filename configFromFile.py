@@ -10,12 +10,14 @@ class configurator:
 		"lockpolicy":0,
 		"timeout":0,
 		"synclog":0,
+		"logpath":1
 	}
 	syncConfigKeyDefault = {
 		"maxthreadnum":"2",
 		"lockpolicy":"wait",
 		"timeout":"1d",
-		"synclog":"syncLog.log"
+		"synclog":"syncLog.log",
+		"logpath":"/var"
 	}
 	# the legal config keys, 1 means that the key must exist
 	mirrorConfigKeys = {
@@ -202,7 +204,18 @@ class configurator:
 
 			self.verbose("========"+section+".sh=======", 2)
 			self.verbose(command,2)
+
+		#generate the initilization excutable
+		outFile = open(configurator.ScriptDirectory + '/_initialSync.sh', "w")
+		outFile.write('#!/bin/sh\n')
+		for (section, command) in syncCommands:
+			outFile.write('./' + section + '.sh | tee ' + section + '_init_log.log\n')
+		outFile.close()
+		call(["chmod", "+x", configurator.ScriptDirectory + '/' + section + '.sh'])
+		self.verbose('initialization excutable generated', 1)
+
 		return True
+
 
 	def writeCrontab(self, configFilename):
 		if not self.checkMirrorConfigAccuracy(configFilename):

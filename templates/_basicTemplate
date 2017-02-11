@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 filename=`basename $0`
 
 # create the lock
@@ -44,16 +44,26 @@ fi
 # before sync comands here <--------------------------------------------------------
 
 # sync
+startSyncTime=$(date +%s)
+set -o pipefail
 echo '==== sync '$filename' start ===='
-timeout %(timeout)% %(synctool)% # enter the sync command here <--------------------
+timeout --preserve-status %(timeout)%h %(synctool)%        | tee %(logpath)%/${filename}"_"$(date +%F_%T)".log"
+                                                  #  ^^^^<---enter the sync command here <-----------
+result=$?
+stopSyncTime=$(date+%s)
 
-if [ $? -eq 124 ]
+if [ $((stopSyncTime-startSyncTime)) -gt $((%(timeout)%*3600)) ]
 then
-	#sync timeout
 	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
 else
-	#sync succeeded
-	echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
+	if [ $result -eq 0 ]	#<------ modify success critirea here <-------------------
+	then
+		#sync succeeded
+		echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
+	else
+		#sync failed
+		echo -e $filename"\tfailed\t"$(date +%F_%T) >> %(syncLog)%
+	fi
 fi
 
 # after sync commands here <-------------------------------------------------------

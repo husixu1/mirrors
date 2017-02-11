@@ -3,8 +3,8 @@
 ## Tool setup
 
 ### git
-*install git
-*use git
+* install git
+* use git
 
 ### rsync
 * install rsync

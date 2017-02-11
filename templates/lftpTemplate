@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 filename=`basename $0`
 
 # create the lock
@@ -29,21 +29,32 @@ then
 fi
 
 # sync
+startSyncTime=$(date +%s)
+set -o pipefail
 echo '==== sync '$filename' start ===='
 
 currentPath=$PWD
 cd %(syncPath)%
-timeout %(timeout)% %(synctool)% "%(url)%" -e "mirror --verbose -P %(threads)% --delete; bye"
+timeout --preserve-status %(timeout)%h %(synctool)% "%(url)%" -e "mirror --verbose -P %(threads)% --delete; bye" | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
 result=$?
 cd $currentPath
 
-if [ $result -eq 124 ]
+stopSyncTime=$(date +%s)
+
+if [ $((stopSyncTime-startSyncTime)) -gt %((%(timeout)%*3600)) ]
 then
 	#sync timeout
 	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
 else
-	#sync succeeded
-	echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
+	if [ $result -eq 0 ]
+	then
+		#sync succeeded
+		echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
+	else
+		#sync failed
+		echo -e $filename"\tfailed\t"$(date +%F_%T) >> %(syncLog)%
+	fi
+		
 fi
 
 # after sync commands here <-------------------------------------------------------
