@@ -1,4 +1,7 @@
-* 0 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/archlinux.sh
-* 2 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/pypi.sh
-* 3 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/linux.sh
-* 4 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/msys2.sh
+27 0 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/archlinux.sh
+51 8 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/archlinuxarm.sh
+43 2 1-31/2 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/pypi.sh
+38 3 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/linux-stable.sh
+53 4 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/linux.sh
+24 5 */1 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/openwrt.sh
+14 4 2-31/2 * * /bin/sh /home/husixu/Scripts/Mirrors/Scripts/msys2.sh

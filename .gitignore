@@ -4,3 +4,4 @@ Scripts/
 *.conf
 cmake-build-debug/
 log/
+cron
