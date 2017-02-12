@@ -44,19 +44,28 @@ fi
 # before sync comands here <--------------------------------------------------------
 
 # sync
+currentPath=$PWD
+
+#record the start sync time
 startSyncTime=$(date +%s)
 set -o pipefail
+
 echo '==== sync '$filename' start ===='
 timeout --preserve-status %(timeout)%h %(synctool)%        | tee %(logpath)%/${filename}"_"$(date +%F_%T)".log"
                                                   #  ^^^^<---enter the sync command here <-----------
 result=$?
+
+# record the stop sync time
+sleep 2
 stopSyncTime=$(date+%s)
 
+# go back to the Script path
+cd $currentPath
 if [ $((stopSyncTime-startSyncTime)) -gt $((%(timeout)%*3600)) ]
 then
 	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
 else
-	if [ $result -eq 0 ]	#<------ modify success critirea here <-------------------
+	if [ $result -eq 0 ]	#<------ modify success judgement here <-------------------
 	then
 		#sync succeeded
 		echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%

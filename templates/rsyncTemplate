@@ -30,6 +30,7 @@ echo '==== sync '$filename' start ===='
 timeout --preserve-status  %(timeout)%h %(syncTool)% %(parameter)% %(url)% %(syncPath)% | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
 result=$?
 
+sleep 2
 stopSyncTime=$(date +%s)
 
 if [ $((stopSyncTime-startSyncTime)) -gt $((%(timeout)%*3600)) ]

@@ -35,10 +35,11 @@ echo '==== sync '$filename' start ===='
 
 currentPath=$PWD
 cd %(syncPath)%
-timeout --preserve-status %(timeout)%h %(synctool)% "%(url)%" -e "mirror --verbose -P %(threads)% --delete; bye" | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
+timeout --preserve-status %(timeout)%h %(synctool)% "%(url)%" -e "mirror --verbose=3 -P %(threads)% --delete; bye" | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
 result=$?
 cd $currentPath
 
+sleep 2
 stopSyncTime=$(date +%s)
 
 if [ $((stopSyncTime-startSyncTime)) -gt %((%(timeout)%*3600)) ]

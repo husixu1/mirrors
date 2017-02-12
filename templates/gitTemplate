@@ -56,7 +56,7 @@ cd %(syncpath)%
 timeout --preserve-status %(timeout)%h %(synctool)% %(parameter)% | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
 result=$?
 cd $currentPath
-
+sleep 2
 stopSyncTime=$(date +%s)
 
 if [ $((startSyncTime-stopSyncTime)) -gt $((%(timeout)%*3600)) ]

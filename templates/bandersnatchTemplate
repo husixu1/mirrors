@@ -42,10 +42,12 @@ echo $filename >> _syncLock
 
 # sync
 set -o pipefail
+startSyncTime=$(date +%s)
 echo '==== sync '$filename' start ===='
 timeout %(timeout)%h %(syncTool)% %(parameter)% %(configFileName)% mirror | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
-
-if [ $? -eq 124 ]
+sleep 2
+stopSyncTime=$(date +%s)
+if [ $((stopSyncTime-startSyncTime)) -gt $((%(timeout)%*3600)) ]
 then
 	#sync timeout
 	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
