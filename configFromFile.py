@@ -11,14 +11,16 @@ class configurator:
         "lockpolicy": 0,
         "timeout": 0,
         "synclog": 0,
-        "logpath": 1
+        "logpath": 1,
+        "inittimeout":0
     }
     syncConfigKeyDefault = {
         "maxthreadnum": "2",
         "lockpolicy": "wait",
-        "timeout": "1d",
+        "timeout": "12",
         "synclog": "syncLog.log",
-        "logpath": "/var"
+        "logpath": "/var",
+        "inittimeout":"24"
     }
     # the legal config keys, 1 means that the key must exist
     mirrorConfigKeys = {
@@ -30,7 +32,8 @@ class configurator:
             "syncinterval": 0,
             "syncpath": 1,
             "priority": 0,
-            "timeout": 0
+            "timeout": 0,
+            "inittimeout":0
         },
         "rsync": {
             "parameter": 0
@@ -56,7 +59,8 @@ class configurator:
             "syncinterval": "1",
             "syncpath": "",
             "priority": "1",
-            "timeout": "1"
+            "timeout": "1",
+            "inittimeout":"24"
         },
         "rsync": {
             "parameter": "--verbose --recursive --update --links --hard-links --safe-links --perms --times --delete-after --progress --human-readable "},
@@ -128,7 +132,7 @@ class configurator:
                     isKeyExist = False
         return isKeyExist
 
-    def generateSyncCommands(self, syncConfigFileName, mirrorConfigFileName):
+    def generateSyncCommands(self, syncConfigFileName, mirrorConfigFileName, isInitTemplate=False):
         """generate sync command from two config file
         :return False if error occurred
         :return a list of (section, command) if no error occurred
@@ -152,7 +156,10 @@ class configurator:
             legalKeys = dict(configurator.syncConfigKeys, **configurator.mirrorConfigKeys[synctool])
             legalKeys.update(configurator.mirrorConfigKeys["COMMON"])
             try:
-                template = open("templates/" + synctool + "Template", "r")
+                if isInitTemplate:
+                    template = open("templates/" + synctool + "InitTemplate", "r")
+                else:
+                    template = open("templates/" + synctool + "Template", "r")
                 buff = template.read()
                 for key in replacer.findall(buff):
                     key = key.lower()
@@ -179,6 +186,7 @@ class configurator:
                     else:
                         self.perror('Template: key "' + key + '" not found')
                         return False
+                template.close()
             except FileNotFoundError:
                 self.perror("file \"" + synctool + "Template\" not found")
                 return False
@@ -195,10 +203,9 @@ class configurator:
         # make the script directory
         if call(["test", "-d", configurator.ScriptDirectory]) == 1:
             self.verbose("directory " + configurator.ScriptDirectory + " does not exist, creating one...", 2)
-            call(["mkdir", configurator.ScriptDirectory])
         else:
             call(["rm", "-rf", configurator.ScriptDirectory])
-            call(["mkdir", configurator.ScriptDirectory])
+        call(["mkdir", configurator.ScriptDirectory])
         # write buffs into file
         for (section, command) in syncCommands:
             outFile = open(configurator.ScriptDirectory + '/' + section + '.sh', "w")
@@ -206,16 +213,30 @@ class configurator:
             outFile.close()
             call(["chmod", "+x", configurator.ScriptDirectory + '/' + section + '.sh'])
 
-            self.verbose("========" + section + ".sh=======", 2)
-            self.verbose(command, 2)
+            self.verbose("========" + section + ".sh========", 2)
+            self.verbose(command, 3)
 
-            # generate the initilization excutable
+        initCommands = self.generateSyncCommands(syncConfigFileName, mirrorConfigFileName, True)
+        if not initCommands:
+            return False
+        for (section, command) in initCommands:
+            outFile = open(configurator.ScriptDirectory+'/'+section+'_init.sh', "w")
+            outFile.write(command)
+            outFile.close()
+            call(["chmod", "+x", configurator.ScriptDirectory + '/' + section + '_init.sh'])
+
+            self.verbose("========" + section + "_init.sh========", 2)
+            self.verbose(command, 3)
+
+
+        # generate the initilization excutable
         outFile = open(configurator.ScriptDirectory + '/_initialSync.sh', "w")
         outFile.write('#!/bin/sh\n')
         for (section, command) in syncCommands:
-            outFile.write('./' + section + '.sh | tee ' + section + '_init_log.log\n')
+            outFile.write('./' + section + '_init.sh | tee ' + section + '_init_log.log\n')
         outFile.close()
-        call(["chmod", "+x", configurator.ScriptDirectory + '/' + section + '.sh'])
+        call(["chmod", "+x", configurator.ScriptDirectory + '/_initialSync.sh'])
+
         self.verbose('initialization excutable generated', 1)
 
         return True

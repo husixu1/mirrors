@@ -23,24 +23,6 @@ then
 fi
 echo $filename >> _syncLock
 
-excuted=0
-if [ -f _executeOnceLock ]
-then
-	for name in `cat _excuteOnceLock`
-	do
-		if [ $name == $filename ]
-		then
-			excuted=1
-		fi
-	done
-fi
-
-if [ $excuted -eq 0 ]
-then
-	# excute once commands here <----------------------------------------------
-	echo $filename >> _excuteOnceLock
-fi
-
 # before sync comands here <--------------------------------------------------------
 
 # sync

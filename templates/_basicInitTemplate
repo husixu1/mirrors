@@ -23,29 +23,44 @@ then
 fi
 echo $filename >> _syncLock
 
-# sync
-startSyncTime=$(date +%s)
-set -o pipefail
-echo '==== sync '$filename' start ===='
-if [ ! -d %(syncpath)% ]
+excuted=0
+if [ -f _executeOnceLock ]
 then
-	mkdir -p %(syncpath)%
+	for name in `cat _excuteOnceLock`
+	do
+		if [ $name == $filename ]
+		then
+			excuted=1
+		fi
+	done
 fi
 
-currentPath=$PWD
-cd %(syncpath)%
-timeout --preserve-status %(timeout)%h %(synctool)% %(parameter)% | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
-result=$?
-cd $currentPath
-sleep 2
-stopSyncTime=$(date +%s)
+# before sync comands here <--------------------------------------------------------
 
-if [ $((startSyncTime-stopSyncTime)) -gt $((%(timeout)%*3600)) ]
+# sync
+currentPath=$PWD
+
+#record the start sync time
+startSyncTime=$(date +%s)
+set -o pipefail
+
+echo '==== sync '$filename' start ===='
+timeout --preserve-status %(inittimeout)%h %(synctool)%        | tee %(logpath)%/${filename}"_"$(date +%F_%T)".log"
+                                                      #  ^^^^<---enter the initialization sync command here <-----------
+result=$?
+
+# record the stop sync time
+sleep 2
+stopSyncTime=$(date+%s)
+
+# go back to the Script path
+cd $currentPath
+
+if [ $((stopSyncTime-startSyncTime)) -gt $((%(timeout)%*3600)) ]
 then
-	#sync timeout
 	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
 else
-	if [ $result -eq 0 ]
+	if [ $result -eq 0 ]	#<------ modify success judgement here <-------------------
 	then
 		#sync succeeded
 		echo -e $filename"\tsucceed\t"$(date +%F_%T) >> %(syncLog)%
@@ -55,6 +70,7 @@ else
 	fi
 fi
 
+# after sync commands here <-------------------------------------------------------
 echo '==== sync '$filename' stop ===='
 
 # remove the lock

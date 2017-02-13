@@ -27,20 +27,13 @@ echo $filename >> _syncLock
 startSyncTime=$(date +%s)
 set -o pipefail
 echo '==== sync '$filename' start ===='
-if [ ! -d %(syncpath)% ]
-then
-	mkdir -p %(syncpath)%
-fi
-
-currentPath=$PWD
-cd %(syncpath)%
-timeout --preserve-status %(timeout)%h %(synctool)% %(parameter)% | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
+timeout --preserve-status  %(inittimeout)%h %(syncTool)% %(parameter)% %(url)% %(syncPath)% | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
 result=$?
-cd $currentPath
+
 sleep 2
 stopSyncTime=$(date +%s)
 
-if [ $((startSyncTime-stopSyncTime)) -gt $((%(timeout)%*3600)) ]
+if [ $((stopSyncTime-startSyncTime)) -gt $((%(timeout)%*3600)) ]
 then
 	#sync timeout
 	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%

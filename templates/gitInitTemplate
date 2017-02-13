@@ -23,6 +23,8 @@ then
 fi
 echo $filename >> _syncLock
 
+# initilization commands
+
 # sync
 startSyncTime=$(date +%s)
 set -o pipefail
@@ -32,11 +34,11 @@ then
 	mkdir -p %(syncpath)%
 fi
 
-currentPath=$PWD
 cd %(syncpath)%
-timeout --preserve-status %(timeout)%h %(synctool)% %(parameter)% | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
+timeout --preserve-status %(inittimeout)%h git clone --mirror %(url)% %(syncpath)%
+
 result=$?
-cd $currentPath
+
 sleep 2
 stopSyncTime=$(date +%s)
 

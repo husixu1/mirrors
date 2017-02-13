@@ -23,24 +23,26 @@ then
 fi
 echo $filename >> _syncLock
 
+if [ ! -d %(syncPath)% ]
+then
+	mkdir -p %(syncPath)%
+fi
+
 # sync
 startSyncTime=$(date +%s)
 set -o pipefail
 echo '==== sync '$filename' start ===='
-if [ ! -d %(syncpath)% ]
-then
-	mkdir -p %(syncpath)%
-fi
 
 currentPath=$PWD
-cd %(syncpath)%
-timeout --preserve-status %(timeout)%h %(synctool)% %(parameter)% | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
+cd %(syncPath)%
+timeout --preserve-status %(inittimeout)%h %(synctool)% "%(url)%" -e "mirror --verbose=3 -P %(threads)% --delete; bye" | tee %(logPath)%/${filename}"_"$(date +%F_%T)".log"
 result=$?
 cd $currentPath
+
 sleep 2
 stopSyncTime=$(date +%s)
 
-if [ $((startSyncTime-stopSyncTime)) -gt $((%(timeout)%*3600)) ]
+if [ $((stopSyncTime-startSyncTime)) -gt %((%(timeout)%*3600)) ]
 then
 	#sync timeout
 	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
@@ -53,8 +55,10 @@ else
 		#sync failed
 		echo -e $filename"\tfailed\t"$(date +%F_%T) >> %(syncLog)%
 	fi
+		
 fi
 
+# after sync commands here <-------------------------------------------------------
 echo '==== sync '$filename' stop ===='
 
 # remove the lock
