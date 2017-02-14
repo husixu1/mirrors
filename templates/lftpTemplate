@@ -42,7 +42,7 @@ cd $currentPath
 sleep 2
 stopSyncTime=$(date +%s)
 
-if [ $((stopSyncTime-startSyncTime)) -gt %((%(timeout)%*3600)) ]
+if [ $((stopSyncTime-startSyncTime)) -gt $((%(timeout)%*3600)) ]
 then
 	#sync timeout
 	echo -e $filename"\ttimeout\t"$(date +%F_%T) >> %(syncLog)%
