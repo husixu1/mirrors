@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0">
+	<title>UniqueStudio开源镜像站</title>
+	<link rel="icon" href="favicon.ico">
+	<link rel="stylesheet" type="text/css" href="mirrors.css">
+	<script>
+		function activate(self) {
+			document.querySelector(".navbar-nav .active").className = "";
+			self.className = "active";
+		}
+		function inactivate() {
+			document.querySelector(".navbar-nav .active").className = "";
+			document.querySelector(".navbar-nav>li").className = "active"
+		}
+		window.onload = function () {
+			var lis = document.querySelectorAll(".navbar-nav>li");
+			lis.forEach(function (ele) {
+				ele.addEventListener("click", function () {
+					return ele.firstChild.click()
+				})
+			})
+		}
+	</script>
+</head>
+<body>
+<div class="nav">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="#"><img src="logo.png" style="display: inline-block"></a>
+	</div>
+	<div class="navbar-right">
+		<ul class="navbar-nav" >
+			<li class="active" onmouseover="activate(this)" onmouseout="inactivate()"><a href="#">HOME</a></li>
+			<li onmouseover="activate(this)" onmouseout="inactivate()"><a href="#" >EVENTS</a></li>
+			<li onmouseover="activate(this)" onmouseout="inactivate()"><a href="#" >RSS</a></li>
+			<li onmouseover="activate(this)" onmouseout="inactivate()"><a href="./mirrors_server.html" >MIRRORS</a></li>
+		</ul>
+	</div>
+</div>
+<div class="main-body">
+	<div class="main-left">
+		<h1>镜像列表</h1>
+        <table class="table" cellspacing="0" cellpadding="0">
+        	<thead>
+	        <tr>
+        		<th>Name</th>
+        		<th>Last Update</th>
+		        <th>Status</th>
+		        <th>Help</th>
+        	</tr>
+	        </thead>
+	        <tbody>
+%(repeatBegin)%
+	        <tr>
+				<td><a href="%(name)%"> %(name)% </a></td>
+				<td>%(time)%</td>
+				<td>%(status)%</td>
+				<td>help</td>
+			</tr>
+%(repeatEnd)%
+	        </tbody>
+        </table>
+	</div>
+	<div class="main-right">
+		<div class="news">
+			<h2>新闻公告</h2>
+			<ul>
+				<li><a href="#">2016-12-27 新增 Chromium OS 镜像</a></li>
+				<li><a href="#">2016-12-27 新增 Chromium OS 镜像</a></li>
+				<li><a href="#">2016-12-27 新增 Chromium OS 镜像</a></li>
+			</ul>
+		</div>
+		<div class="contact">
+			<h2>联系我们</h2>
+			<ul>
+				<li><a href="http://hustunique.com">意见反馈</a></li>
+			</ul>
+		</div>
+		<div class="links">
+			<h2>相关链接</h2>
+			<ul>
+				<li><a href="mirrors_server.html">服务器状态</a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+<div class="footer">
+	Copyright © 2017 Unique Studio All rights reserved
+</div>
+</body>
+</html>

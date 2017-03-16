@@ -1,0 +1,131 @@
+#!/usr/bin/env python
+
+## ------ NOTE ------
+## the author is sleepy when writing this file
+## thus this module is implemented dirtily and has absolutely no protablility
+## it should be rewritten and should never be used elsewhere
+
+
+class htmlGenerator:
+    """ generates html from template"""
+
+    # the macros for substitution and their default value
+    macros = {
+            "name":"Unknown",
+            "url":"about:blank",
+            "status":"Initialized",
+            "time":"1970-01-01_00:00:00",
+            }
+
+    # segment macros, marks a segment, must be in a single line
+    segMacros = {
+            "repeatBegin":"",
+            "repeatEnd":"",
+            }
+
+    def __init__(self, debugLevel = 1):
+        self.debugLevel = debugLevel;
+
+    def generateHTML(self, logFilename, templateFileName, outFileName):
+        macroFinder = re.compile(r"%\((\w+)\)%")
+        statusFinder = re.compile(r"(\w+)\.sh\s+(\w+)\s+(.+)")
+        try:
+            # open input files
+            with open(templateFileName,"r") as template:
+                templateLines = template.readlines()
+                template.close()
+            with open(logFilename,"r") as log:
+                logLines = log.readlines()
+                log.close()
+
+            # check if all macro legal
+            for line in templateLines:
+                if macroFinder.search(line):
+                    macros = macroFinder.findall(line)
+                    for macro in macros:
+                        if not macro in htmlGenerator.macros and not macro in htmlGenerator.segMacros:
+                            self.perror("macro "+macro+" not found")
+                            return False
+                        if macro in htmlGenerator.segMacros:
+                            if re.match(r"\s+%\(\w+\)%\s+",line):
+                                self.perror("segment macro "+macro+" must be in line alone")
+                                return False
+
+            # read the status log
+            status = []
+            uniqSet = []
+            for line in logLines:
+                group = statusFinder.search(line).groups()
+                if group[0] in uniqSet:
+                    continue
+                else:
+                    uniqSet.append(group[0])
+                    status.append((group[0],group[1],group[2]))
+
+            statusMap = {
+                    "name":0,
+                    "status":1,
+                    "time":2
+                    }
+
+            lineNum = 0
+            result = []
+            while lineNum < len(templateLines):
+                # if line has macro
+                if macroFinder.search(templateLines[lineNum]):
+                    macro = macroFinder.search(templateLines[lineNum]).group(1)
+                    macros = macroFinder.findall(templateLines[lineNum])
+                    # if macro not in repeat part
+                    if macro in htmlGenerator.macros:
+                        for macro in macros:
+                            templateLines[lineNum] = macroFinder.sub(htmlGenerator.macros[macro],templateLines[lineNum], 1)
+                        result.append(templateLines[lineNum])
+
+                    # deal with the repeat segment
+                    elif macro in htmlGenerator.segMacros:
+                        repeatSeg = []
+                        lineNum += 1
+                        while lineNum < len(templateLines):
+                            if macroFinder.search(templateLines[lineNum]) and macroFinder.search(templateLines[lineNum]).group(1) == 'repeatEnd':
+                                break
+                            repeatSeg.append(templateLines[lineNum])
+                            lineNum += 1
+                        if not macroFinder.search(templateLines[lineNum]) or macroFinder.search(templateLines[lineNum]).group(1) != 'repeatEnd':
+                            perror("repeatBegin has no counterpart (repeatEnd not found)")
+                            return False
+
+                        # repeatly replace the segment
+                        for record in status:
+                            for line in repeatSeg:
+                                if macroFinder.search(line):
+                                    for macro in macroFinder.findall(line):
+                                        line = macroFinder.sub(record[statusMap[macro]],line,1)
+                                result.append(line)
+                # if line has no macro
+                else:
+                    result.append(templateLines[lineNum])
+
+                lineNum += 1
+            with open(outFileName, "w") as outFile:
+                outFile.writelines(result)
+                outFile.close()
+        except IOError:
+            self.perror("file not found, exiting")
+            exit(0)
+
+    def perror(self, error, level=1):
+        if self.debugLevel >= level:
+            print("error: " + error)
+
+    def verbose(self, info, level=2):
+        if self.debugLevel >= level:
+            print(info)
+
+# ------ run the update function ------
+import re
+from subprocess import call
+
+gen = htmlGenerator();
+gen.generateHTML("./Scripts/syncStatus.log", "./templates/htmlTemplates/index.html","~www/mirrors/index.html")
+# -------------------------------------
+

@@ -157,9 +157,9 @@ class configurator:
             legalKeys.update(configurator.mirrorConfigKeys["COMMON"])
             try:
                 if isInitTemplate:
-                    template = open("templates/" + synctool + "InitTemplate", "r")
+                    template = open("templates/syncTemplates/" + synctool + "InitTemplate", "r")
                 else:
-                    template = open("templates/" + synctool + "Template", "r")
+                    template = open("templates/syncTemplates/" + synctool + "Template", "r")
                 buff = template.read()
                 for key in replacer.findall(buff):
                     key = key.lower()

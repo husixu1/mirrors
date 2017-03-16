@@ -6,3 +6,4 @@ conf = configurator(1)
 
 conf.generateExcutables('sync.conf','mirror.conf')
 conf.writeCrontab('mirror.conf')
+
